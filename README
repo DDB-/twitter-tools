@@ -1,0 +1,3 @@
+This project contains a set of tools, written in perl, that use the twitter libraries to interact with twitter and do stuff.
+
+Right now the only available tool is a tweet tool, which allows the user to tweet from the command line. aliasing the file to "tweet" can make it seem more legit.
