@@ -7,7 +7,7 @@ use File::Basename qw();
 
 #Get File directory info
 my ($name, $path, $suffix) = File::Basename::fileparse($0);
-my $credentials = $path . "TieDomiFan-Credentials1.txt";
+my $credentials = $path . "credentials/TieDomiFan-Credentials1.txt";
 
 # Read My Credentials and Write them to a Hash
 my %creds = ();
