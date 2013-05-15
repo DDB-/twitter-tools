@@ -3,10 +3,14 @@
 use strict;
 use warnings;
 use Net::Twitter;
+use File::Basename qw();
+
+#Get File directory info
+my ($name, $path, $suffix) = File::Basename::fileparse($0);
+my $credentials = $path . "TieDomiFan-Credentials1.txt";
 
 # Read My Credentials and Write them to a Hash
 my %creds = ();
-my $credentials = 'TieDomiFan-Credentials1.txt';
 open my $info, $credentials or die "Could not open $credentials: $!";
 while( my $line = <$info>)  { 
 	chomp $line;  
