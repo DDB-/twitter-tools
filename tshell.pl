@@ -2,16 +2,28 @@
 
 use strict;
 use warnings;
+use Twitter;
 
 my $username = $ENV{USER};
 my $psi = $username . "\@twitter> ";
 
+if(!defined $ARGV[0]){
+    print "No username provided. Exiting.\n" and exit;
+}
+
+my $twitter_name = shift @ARGV;
+my $twitter = Twitter->new($twitter_name);
+
 for(;;){
 	print $psi; # Print the prompt
-	my $command = <>; # Get the command
-	chomp $command;	
+	my $content = <>; # Get the command
+	chomp $content;
 	
-	print $command . "\n";
+	print $content . "\n";
 	
-	last if $command eq "exit"; #Exit on exit command	
+	last if $content eq "exit"; #Exit on exit command
+}
+
+sub delegate {
+    
 }
