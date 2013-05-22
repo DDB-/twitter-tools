@@ -36,16 +36,15 @@ sub new {
 
 sub tweet {
     my $self = shift;
-    print "Using function uninitilized\n" and return unless $net_twitter;
-    print "Error: Empty tweet body\n" and return unless ($_[0]);
+    print "ERROR: Using function uninitilized\n" and return unless $net_twitter;
+    print "ERROR: Empty tweet body\n" and return unless ($_[0]);
     
-    my $tweet = join @_;
-    print ("Tweet length of " . length($tweet) .  " is too long. Aborted.\n") and return if (length($tweet) > 140);
+    my $tweet = shift;
+    print ("ERROR: Tweet length of " . length($tweet) .  " is too long. Aborted.\n") and return if (length($tweet) > 140);
     
-    #my $result = eval { $net_twitter->update($tweet) };
+    my $result = eval { $net_twitter->update($tweet) };
     
-	#warn "$@\n" if $@;
-    
+	warn "$@\n" if $@;
 }
 
 1;
