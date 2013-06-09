@@ -40,5 +40,7 @@ sub delegate {
     if ($command eq "tweet"){
         my $tweet = join (' ', @cont_arr);
         $twitter->tweet($tweet);
-    }
+    } elsif ($command eq "timeline") {
+		$twitter->timeline();
+	}
 }
