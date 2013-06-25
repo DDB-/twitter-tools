@@ -33,7 +33,7 @@ sub new {
     close $info;
     
     $net_twitter = Net::Twitter->new(
-        traits 			  => [qw(OAuth API::REST)],
+        traits 			  => [qw(OAuth API::RESTv1_1)],
         consumer_key        => $creds{'consumer_key'},
         consumer_secret     => $creds{'consumer_secret'},
         access_token        => $creds{'access_token'},
