@@ -7,6 +7,7 @@ use Term::ANSIColor;
 use Twitter;
 
 if(!defined $ARGV[0]){
+	print "Usage: ./tshell.pl USERNAME\n";
     print "No username provided. Exiting.\n" and exit;
 }
 
