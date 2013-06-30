@@ -16,6 +16,8 @@ use constant {
 	UNINITIALIZED	=> 1,
 	TWEET_EMPTY		=> 2,
 	TWEET_LONG		=> 3,
+	NO_REPLY_ID		=> 4,
+	NO_REPLY_LIST	=> 5,
 };
 
 # Global Variables
@@ -57,14 +59,24 @@ sub _print_error {
 		when(TWEET_LONG) {
 			print ("ERROR: Tweet length of " . length($args{tweet}) .  " is too long. Aborted.\n");
 		}
+		when(NO_REPLY_ID){ print "ERROR: No Reply ID given for replying\n"; }
+		when(NO_REPLY_LIST) { print "ERROR: No Reply List selected\n"; }
+	}
+}
+
+sub _print_errors {
+	my @errors = @_;
+	
+	foreach my $error (@errors){
+		_print_error($error);
 	}
 }
 
 sub _format_tweet_info {
 	my %info = @_;
 	
-	my $tweet = "[$info{time}] $info{count}: ";
-	$tweet .= "[RT $info{retweeted_user}] " if($info{'retweeted_user'});
+	my $tweet = "[$info{time}] $info{sh_id}: ";
+	$tweet .= "[RT $info{retweeted_user}] " if($info{'retweeted_user'}); 
 	$tweet .= "$info{username} ($info{name}): $info{text}\n---\n";
 	return $tweet;
 }
@@ -78,7 +90,8 @@ sub _format_time {
 
 sub timeline {
 	my $self = shift;
-	_print_error(UNINITIALIZED) and return unless $net_twitter;
+	
+	if(!$net_twitter){ _print_error(UNINITIALIZED); return; }
 	
 	@timeline_tweets = ();
 	my $count = 0;
@@ -87,11 +100,11 @@ sub timeline {
 		foreach my $tweet (@{$tweet_arr}){
 			my $created_at = $tweet->{'created_at'};
 			my %info = ( "username" , $tweet->{'user'}->{'screen_name'},
-						 "id"		, $tweet->{'user'}->{'id'},
+						 "t_id"		, $tweet->{'user'}->{'id'},
 						 "name"		, $tweet->{'user'}->{'name'},
 						 "text"		, $tweet->{'text'},
 						 "time"		, _format_time($created_at),
-						 "count"	, $count
+						 "sh_id"	, $count
 			);
 			if($tweet->{'retweeted_status'}){
 				$info{"retweeted_user"} = $tweet->{'retweeted_status'}->{'user'}->{'screen_name'};
@@ -117,10 +130,36 @@ sub _validate_tweet {
 	return 1;
 }
 
+sub reply {
+	my $self = shift;
+	
+	my @errors;
+	push @errors, UNINITIALIZED unless $net_twitter;
+	push @errors, NO_REPLY_ID unless ($_[0]);
+	push @errors, NO_REPLY_LIST unless ($_[1]);
+	push @errors, TWEET_EMPTY unless ($_[2]);
+	if(@errors){ _print_errors(@errors); return; }
+	
+	my $reply_id = shift;
+	my $reply_list = shift;
+	my $tweet = shift;
+	
+	my %reply_info;
+	foreach my $info (@timeline_tweets){
+		if ($$info{'sh_id'} == $reply_id){
+			%reply_info = %$info;
+		}
+	}
+	print Dumper(\%reply_info);
+}
+
 sub tweet {
     my $self = shift;
-    _print_error(UNINITIALIZED) and return unless $net_twitter;
-    _print_error(TWEET_EMPTY) and return unless ($_[0]);
+	
+	my @errors;
+	push @errors, UNINITIALIZED unless $net_twitter;
+	push @errors, TWEET_EMPTY unless ($_[0]);
+    if(@errors){ _print_errors(@errors); return; }
     
     my $tweet = shift;
     return if !_validate_tweet($tweet);
