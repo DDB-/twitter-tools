@@ -12,7 +12,11 @@ use Net::Twitter;
 use Time::Piece;
 
 # Constants
-my $UNINITIALIZED = 1;
+use constant {
+	UNINITIALIZED	=> 1,
+	TWEET_EMPTY		=> 2,
+	TWEET_LONG		=> 3,
+};
 
 # Global Variables
 my $net_twitter;
@@ -43,26 +47,29 @@ sub new {
     return $self;
 }
 
-sub print_error {
-	my $code = shift || ( print "WARN: No error code given!\n" and return );
+sub _print_error {
+	my $code = shift || ( print "ERROR: No error code given!\n" and return );
+	my %args = @_;
 			
 	given($code){
-		when($Twitter::UNITIALIZED) { print "ERROR: No twitter account initialized\n"; }
+		when(UNINITIALIZED) { print "ERROR: No twitter account initialized\n"; }
+		when(TWEET_EMPTY) { print "ERROR: Empty tweet body.\n"; }
+		when(TWEET_LONG) {
+			print ("ERROR: Tweet length of " . length($args{tweet}) .  " is too long. Aborted.\n");
+		}
 	}
 }
 
-sub format_tweet_info {
+sub _format_tweet_info {
 	my %info = @_;
 	
 	my $tweet = "[$info{time}] $info{count}: ";
-	if($info{'retweeted_user'}){
-		$tweet .= "[RT $info{retweeted_user}] ";
-	}
+	$tweet .= "[RT $info{retweeted_user}] " if($info{'retweeted_user'});
 	$tweet .= "$info{username} ($info{name}): $info{text}\n---\n";
 	return $tweet;
 }
 
-sub format_time {
+sub _format_time {
 	my $time = shift;
 	my $time_piece = Time::Piece->strptime($time, "%a %b %d %T %z %Y");
 	$time_piece += $time_piece->localtime->tzoffset;
@@ -71,7 +78,7 @@ sub format_time {
 
 sub timeline {
 	my $self = shift;
-	print_error($Twitter::UNINITIALIZED) and return unless $net_twitter;
+	_print_error(UNINITIALIZED) and return unless $net_twitter;
 	
 	@timeline_tweets = ();
 	my $count = 0;
@@ -83,7 +90,7 @@ sub timeline {
 						 "id"		, $tweet->{'user'}->{'id'},
 						 "name"		, $tweet->{'user'}->{'name'},
 						 "text"		, $tweet->{'text'},
-						 "time"		, format_time($created_at),
+						 "time"		, _format_time($created_at),
 						 "count"	, $count
 			);
 			if($tweet->{'retweeted_status'}){
@@ -95,17 +102,28 @@ sub timeline {
 	}
 	
 	foreach my $info(@timeline_tweets){
-		print format_tweet_info(%{$info});
+		print _format_tweet_info(%{$info});
 	}
+}
+
+sub _validate_tweet {
+	my $tweet = shift || ( print "ERROR: No tweet given\n" and return 0 );
+	
+	if (length($tweet) > 140) {
+		_print_error( TWEET_LONG, 'tweet' => $tweet );
+		return 0;
+	}
+	
+	return 1;
 }
 
 sub tweet {
     my $self = shift;
-    print_error($Twitter::UNINITIALIZED) and return unless $net_twitter;
-    print "ERROR: Empty tweet body\n" and return unless ($_[0]);
+    _print_error(UNINITIALIZED) and return unless $net_twitter;
+    _print_error(TWEET_EMPTY) and return unless ($_[0]);
     
     my $tweet = shift;
-    print ("ERROR: Tweet length of " . length($tweet) .  " is too long. Aborted.\n") and return if (length($tweet) > 140);
+    return if !_validate_tweet($tweet);
     
     my $result = eval { $net_twitter->update($tweet) };
     
