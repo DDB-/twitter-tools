@@ -18,6 +18,7 @@ use constant {
 	TWEET_LONG		=> 3,
 	NO_REPLY_ID		=> 4,
 	NO_REPLY_LIST	=> 5,
+	BAD_REPLY_ID	=> 6,
 };
 
 # Global Variables
@@ -61,6 +62,7 @@ sub _print_error {
 		}
 		when(NO_REPLY_ID){ print "ERROR: No Reply ID given for replying\n"; }
 		when(NO_REPLY_LIST) { print "ERROR: No Reply List selected\n"; }
+		when(BAD_REPLY_ID) { print "No tweet with reply id of " . $args{reply_id}  };
 	}
 }
 
@@ -140,9 +142,9 @@ sub reply {
 	push @errors, TWEET_EMPTY unless ($_[2]);
 	if(@errors){ _print_errors(@errors); return; }
 	
-	my $reply_id = shift;
-	my $reply_list = shift;
-	my $tweet = shift;
+	my $reply_id 	= shift;
+	my $reply_list 	= shift;
+	my $tweet 		= shift;
 	
 	my %reply_info;
 	foreach my $info (@timeline_tweets){
@@ -150,7 +152,22 @@ sub reply {
 			%reply_info = %$info;
 		}
 	}
-	print Dumper(\%reply_info);
+	
+	if(!%reply_info){
+		_print_error( BAD_REPLY_ID, reply_id => $reply_id );
+		return 0;
+	}
+	
+	my $t_reply_id 		= $reply_info{'t_id'};
+	my $reply_to_user 	= '@' . $reply_info{'username'}; 
+	
+	$tweet = $reply_to_user . ' ' . $tweet;
+	return if !_validate_tweet($tweet);
+	
+	my %reply_hash = ( status => $tweet, in_reply_to_status_id => $t_reply_id  );
+	my $result = eval { $net_twitter->update( \%reply_hash ) }; 
+	
+	warn "$@\n" if $@;
 }
 
 sub tweet {

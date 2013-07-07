@@ -44,7 +44,8 @@ sub delegate {
     } elsif ($command eq "timeline") {
 		$twitter->timeline();
 	} elsif ($command eq "reply") {
-		my $tweet = join (' ', @cont_arr);
-		$twitter->reply( 1, 'timeline', $tweet );
+		my $reply_id 	= shift @cont_arr;
+		my $tweet 		= join (' ', @cont_arr);
+		$twitter->reply( $reply_id, 'timeline', $tweet );
 	}
 }
