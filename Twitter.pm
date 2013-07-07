@@ -96,7 +96,7 @@ sub timeline {
 	if(!$net_twitter){ _print_error(UNINITIALIZED); return; }
 	
 	@timeline_tweets = ();
-	my $count = 0;
+	my $count = 1;
 	my @timeline = $net_twitter->home_timeline();
 	foreach my $tweet_arr (@timeline){
 		foreach my $tweet (@{$tweet_arr}){
@@ -139,12 +139,13 @@ sub reply {
 	push @errors, UNINITIALIZED unless $net_twitter;
 	push @errors, NO_REPLY_ID unless ($_[0]);
 	push @errors, NO_REPLY_LIST unless ($_[1]);
-	push @errors, TWEET_EMPTY unless ($_[2]);
+	push @errors, TWEET_EMPTY unless ($_[3]);
 	if(@errors){ _print_errors(@errors); return; }
 	
-	my $reply_id 	= shift;
-	my $reply_list 	= shift;
-	my $tweet 		= shift;
+	my $reply_id 		= shift;
+	my $reply_list 		= shift;
+	my $include_others	= shift;
+	my $tweet 			= shift;
 	
 	my %reply_info;
 	foreach my $info (@timeline_tweets){
@@ -158,12 +159,24 @@ sub reply {
 		return 0;
 	}
 	
+	my @other_users;
+	my @reply_tweet_parts = split( ' ', $reply_info{'text'} );
+	if($include_others){
+		foreach my $part (@reply_tweet_parts) {
+			if ( $part =~ m/^@.+/ ){
+				push @other_users, $part;
+			}
+		}
+	}
+	
 	my $t_reply_id 		= $reply_info{'t_id'};
 	my $reply_to_user 	= '@' . $reply_info{'username'}; 
 	
-	$tweet = $reply_to_user . ' ' . $tweet;
+	my $prefix = $reply_to_user . ' ';
+	foreach my $user (@other_users) { $prefix .= $user . ' '; }
+	$tweet = $prefix . $tweet;
 	return if !_validate_tweet($tweet);
-	
+
 	my %reply_hash = ( status => $tweet, in_reply_to_status_id => $t_reply_id  );
 	my $result = eval { $net_twitter->update( \%reply_hash ) }; 
 	

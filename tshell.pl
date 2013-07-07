@@ -45,7 +45,12 @@ sub delegate {
 		$twitter->timeline();
 	} elsif ($command eq "reply") {
 		my $reply_id 	= shift @cont_arr;
+		my $include_others = 0;
+		if( $cont_arr[0] eq '--all' or $cont_arr[0] eq '-a' ) {
+			$include_others = 1;
+			shift @cont_arr;
+		}
 		my $tweet 		= join (' ', @cont_arr);
-		$twitter->reply( $reply_id, 'timeline', $tweet );
+		$twitter->reply( $reply_id, 'timeline', $include_others, $tweet );
 	}
 }
