@@ -43,6 +43,8 @@ sub delegate {
         $twitter->tweet($tweet);
     } elsif ($command eq "timeline") {
 		$twitter->timeline();
+	} elsif ($command eq "mentions") {
+		$twitter->mentions();
 	} elsif ($command eq "reply") {
 		my $reply_id 	= shift @cont_arr;
 		my $include_others = 0;

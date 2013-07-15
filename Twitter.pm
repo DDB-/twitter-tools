@@ -24,6 +24,7 @@ use constant {
 # Global Variables
 my $net_twitter;
 my @timeline_tweets;
+my @mention_tweets;
 
 sub new {
     my $self = shift;
@@ -87,7 +88,33 @@ sub _format_time {
 	my $time = shift;
 	my $time_piece = Time::Piece->strptime($time, "%a %b %d %T %z %Y");
 	$time_piece += $time_piece->localtime->tzoffset;
-	return $time_piece->strftime("%r");;
+	return $time_piece->strftime("%x %r");;
+}
+
+sub _create_timeline_array {
+	my $timeline = shift;
+	
+	my $count = 1;
+	my @timeline_array;
+	foreach my $tweet_arr (@$timeline){
+		foreach my $tweet (@{$tweet_arr}){
+			my $created_at = $tweet->{'created_at'};
+			my %info = ( "username" , $tweet->{'user'}->{'screen_name'},
+			"t_id"		, $tweet->{'user'}->{'id'},
+			"name"		, $tweet->{'user'}->{'name'},
+			"text"		, $tweet->{'text'},
+			"time"		, _format_time($created_at),
+			"sh_id"	, $count
+			);
+			if($tweet->{'retweeted_status'}){
+				$info{"retweeted_user"} = $tweet->{'retweeted_status'}->{'user'}->{'screen_name'};
+			}
+			$count += 1;
+			push @timeline_array, \%info;
+		}
+	}
+	
+	return @timeline_array;
 }
 
 sub timeline {
@@ -95,28 +122,23 @@ sub timeline {
 	
 	if(!$net_twitter){ _print_error(UNINITIALIZED); return; }
 	
-	@timeline_tweets = ();
-	my $count = 1;
 	my @timeline = $net_twitter->home_timeline();
-	foreach my $tweet_arr (@timeline){
-		foreach my $tweet (@{$tweet_arr}){
-			my $created_at = $tweet->{'created_at'};
-			my %info = ( "username" , $tweet->{'user'}->{'screen_name'},
-						 "t_id"		, $tweet->{'user'}->{'id'},
-						 "name"		, $tweet->{'user'}->{'name'},
-						 "text"		, $tweet->{'text'},
-						 "time"		, _format_time($created_at),
-						 "sh_id"	, $count
-			);
-			if($tweet->{'retweeted_status'}){
-				$info{"retweeted_user"} = $tweet->{'retweeted_status'}->{'user'}->{'screen_name'};
-			}
-			$count += 1;
-			push @timeline_tweets, \%info;
-		}
-	}
+	@timeline_tweets = _create_timeline_array(\@timeline);
 	
 	foreach my $info(@timeline_tweets){
+		print _format_tweet_info(%{$info});
+	}
+}
+
+sub mentions {
+	my $self = shift;
+
+	if(!$net_twitter){ _print_error(UNINITIALIZED); return; }
+
+	my @timeline = $net_twitter->mentions();
+	@mention_tweets = _create_timeline_array(\@timeline);
+	
+	foreach my $info(@mention_tweets){
 		print _format_tweet_info(%{$info});
 	}
 }
