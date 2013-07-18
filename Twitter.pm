@@ -19,6 +19,7 @@ use constant {
 	NO_REPLY_ID		=> 4,
 	NO_REPLY_LIST	=> 5,
 	BAD_REPLY_ID	=> 6,
+	BAD_REPLY_LIST	=> 7,
 };
 
 # Global Variables
@@ -63,14 +64,13 @@ sub _print_error {
 		}
 		when(NO_REPLY_ID){ print "ERROR: No Reply ID given for replying\n"; }
 		when(NO_REPLY_LIST) { print "ERROR: No Reply List selected\n"; }
-		when(BAD_REPLY_ID) { print "No tweet with reply id of " . $args{reply_id}  };
+		when(BAD_REPLY_ID) { print "No tweet with reply id of " . $args{reply_id} . "\n";  }
+		when(BAD_REPLY_LIST) { print "Unsupported or invalid list to reply to.\n"; }
 	}
 }
 
 sub _print_errors {
-	my @errors = @_;
-	
-	foreach my $error (@errors){
+	foreach my $error (@_){
 		_print_error($error);
 	}
 }
@@ -169,8 +169,16 @@ sub reply {
 	my $include_others	= shift;
 	my $tweet 			= shift;
 	
+	my $tweet_arr;
+	if ( $reply_list eq 'timeline' ) {
+		$tweet_arr = \@timeline_tweets;
+	} elsif ( $reply_list eq 'mentions' ) {
+		$tweet_arr = \@mention_tweets;
+	} else {
+		_print_error(BAD_REPLY_LIST); return;		
+	}
 	my %reply_info;
-	foreach my $info (@timeline_tweets){
+	foreach my $info (@$tweet_arr) {
 		if ($$info{'sh_id'} == $reply_id){
 			%reply_info = %$info;
 		}

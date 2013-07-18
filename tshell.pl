@@ -47,16 +47,9 @@ sub delegate {
 		$twitter->mentions();
 	} elsif ($command eq "reply") {
 		my $reply_id 	= shift @cont_arr;
-		my $include_others = 0;
-		if( $cont_arr[0] eq '--all' or $cont_arr[0] eq '-a' ) {
-			$include_others = 1;
-			shift @cont_arr;
-		}
-		my $tweet 		= join (' ', @cont_arr);
-		$twitter->reply( $reply_id, 'timeline', $include_others, $tweet );
-	} elsif ($command eq 'test'){
-		_handle_reply(\@cont_arr);
-	}
+		my $reply_options = _handle_reply(\@cont_arr);
+		$twitter->reply( $reply_id, $reply_options->{source}, $reply_options->{all}, $reply_options->{tweet} )
+	} 
 }
 
 sub _handle_reply {
@@ -92,9 +85,8 @@ sub _handle_reply {
 	foreach my $index (1..$option_index){
 		shift @$content_arr;
 	}
-	my $tweet = join( ' ', @$content_arr );
-	print $tweet;
-	
+	$options{tweet} = join( ' ', @$content_arr );
+	return \%options; 
 }
 
 1;
