@@ -100,7 +100,7 @@ sub _create_timeline_array {
 		foreach my $tweet (@{$tweet_arr}){
 			my $created_at = $tweet->{'created_at'};
 			my %info = ( "username" , $tweet->{'user'}->{'screen_name'},
-			"t_id"		, $tweet->{'user'}->{'id'},
+			"t_id"		, $tweet->{'id_str'},
 			"name"		, $tweet->{'user'}->{'name'},
 			"text"		, $tweet->{'text'},
 			"time"		, _format_time($created_at),
@@ -206,9 +206,8 @@ sub reply {
 	foreach my $user (@other_users) { $prefix .= $user . ' '; }
 	$tweet = $prefix . $tweet;
 	return if !_validate_tweet($tweet);
-
-	my %reply_hash = ( status => $tweet, in_reply_to_status_id => $t_reply_id  );
-	my $result = eval { $net_twitter->update( \%reply_hash ) }; 
+	
+	my $result = eval { $net_twitter->update( { status => $tweet, in_reply_to_status_id => "$t_reply_id" } ) };
 	
 	warn "$@\n" if $@;
 }
