@@ -47,20 +47,24 @@ sub delegate {
 		$twitter->mentions();
 	} elsif ($command eq "reply") {
 		my $reply_command 	= shift @cont_arr;
-		my $reply_options 	= _handle_reply($reply_command, \@cont_arr);
+		my $reply_options 	= _handle_options($reply_command, \@cont_arr);
 		$twitter->reply( $reply_options->{sh_id} , $reply_options->{source}, 
 						 $reply_options->{all}, $reply_options->{tweet} )
+	} elsif ( $command eq "retweet" or $command eq "rt" ) {
+		my $retweet_command = shift @cont_arr;
+		my $retweet_options = _handle_options($retweet_command);
+		$twitter->retweet( $retweet_options->{sh_id}, $retweet_options->{source} );
 	} 
 }
 
-sub _handle_reply {
+sub _handle_options {
 	my $reply_command = shift || (print "Empty command!\n" and return);
 	my $cont_arr	  = shift;
 			
 	# Initialize options and create defaults
 	my %options;
 	$options{sh_id}		= -1; 
-	$options{source} 	= 'timeline';
+	$options{source} 	= '';
 	$options{all} 		= 0;
 
 	my @args = split( '', $reply_command );
@@ -71,7 +75,7 @@ sub _handle_reply {
 		$options{all}		= 1 if $arg eq 'a'
 	}
 	
-	$options{tweet} = join( ' ', @$cont_arr );
+	$options{tweet} = join( ' ', @$cont_arr ) if defined $cont_arr;
 	return \%options; 
 }
 

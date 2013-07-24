@@ -104,7 +104,7 @@ sub _create_timeline_array {
 			"name"		, $tweet->{'user'}->{'name'},
 			"text"		, $tweet->{'text'},
 			"time"		, _format_time($created_at),
-			"sh_id"	, $count
+			"sh_id"		, $count
 			);
 			if($tweet->{'retweeted_status'}){
 				$info{"retweeted_user"} = $tweet->{'retweeted_status'}->{'user'}->{'screen_name'};
@@ -225,6 +225,42 @@ sub tweet {
     
     my $result = eval { $net_twitter->update($tweet) };
     
+	warn "$@\n" if $@;
+}
+
+sub retweet {
+	my $self 		= shift;
+	my $reply_id 	= shift;
+	my $reply_list	= shift;
+
+	my @errors;
+	push @errors, UNINITIALIZED unless $net_twitter;
+	push @errors, NO_REPLY_ID unless $reply_id;
+	push @errors, NO_REPLY_LIST unless $reply_list;
+	if(@errors) { _print_errors(@errors); return;  }
+
+	my $tweet_arr;
+	if ( $reply_list eq 'timeline' ) {
+		$tweet_arr = \@timeline_tweets;
+	} elsif ( $reply_list eq 'mentions' ) {
+		$tweet_arr = \@mention_tweets;
+	} else {
+		_print_error(BAD_REPLY_LIST); return;		
+	}
+	
+	my $retweet_id = '';
+	foreach my $info (@$tweet_arr) {
+		if ($$info{'sh_id'} == $reply_id){
+			$retweet_id = $$info{'t_id'}; 
+		}
+	}
+	
+	if ( not $retweet_id ){
+		_print_error(BAD_REPLY_LIST);
+		return;
+	}
+
+	my $result = eval { $net_twitter->retweet( $retweet_id ) };
 	warn "$@\n" if $@;
 }
 
