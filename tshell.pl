@@ -46,46 +46,32 @@ sub delegate {
 	} elsif ($command eq "mentions") {
 		$twitter->mentions();
 	} elsif ($command eq "reply") {
-		my $reply_id 	= shift @cont_arr;
-		my $reply_options = _handle_reply(\@cont_arr);
-		$twitter->reply( $reply_id, $reply_options->{source}, $reply_options->{all}, $reply_options->{tweet} )
+		my $reply_command 	= shift @cont_arr;
+		my $reply_options 	= _handle_reply($reply_command, \@cont_arr);
+		$twitter->reply( $reply_options->{sh_id} , $reply_options->{source}, 
+						 $reply_options->{all}, $reply_options->{tweet} )
 	} 
 }
 
 sub _handle_reply {
-	my $content_arr = shift || (print "Empty command!\n" and return);
-	
+	my $reply_command = shift || (print "Empty command!\n" and return);
+	my $cont_arr	  = shift;
+			
 	# Initialize options and create defaults
 	my %options;
+	$options{sh_id}		= -1; 
 	$options{source} 	= 'timeline';
 	$options{all} 		= 0;
 
-	my $index = 0;
-	my $option_index = 0;
-	my $end = scalar @{$content_arr};
-	while ( $index < $end and $index == $option_index ){
-		my $current = $$content_arr[$index];
-		if ( $current eq '-s' or $current eq '--source' ) {
-			my $value = $$content_arr[$index+1];
-			if ( $value eq 'm' or $value eq 'mentions' ){
-				$options{source} = 'mentions';
-				$option_index += 2;
-			} elsif ( $value eq 't' or $value eq 'timeline' ) {
-				$options{source} = 'timeline';
-				$option_index += 2
-			}
-			$index++;
-		} elsif ( $current eq '-a' or $current eq '--all' ) {
-			$options{all} = 1;
-			$option_index++;
-		}
-		$index++;
+	my @args = split( '', $reply_command );
+	foreach my $arg (@args) {
+		$options{sh_id} 	= $arg if $arg =~ m{^\d+$};
+		$options{source} 	= 'timeline' if $arg eq 't';
+		$options{source} 	= 'mentions' if $arg eq 'm';
+		$options{all}		= 1 if $arg eq 'a'
 	}
 	
-	foreach my $index (1..$option_index){
-		shift @$content_arr;
-	}
-	$options{tweet} = join( ' ', @$content_arr );
+	$options{tweet} = join( ' ', @$cont_arr );
 	return \%options; 
 }
 
