@@ -47,6 +47,7 @@ sub new {
         consumer_secret     => $creds{'consumer_secret'},
         access_token        => $creds{'access_token'},
         access_token_secret => $creds{'access_token_secret'},
+        ssl                 => 1,
 	);
     
     return $self;
